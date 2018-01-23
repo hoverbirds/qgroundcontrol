@@ -329,6 +329,9 @@ MAVLinkLogManager::MAVLinkLogManager(QGCApplication* app, QGCToolbox* toolbox)
 MAVLinkLogManager::~MAVLinkLogManager()
 {
     _logFiles.clear();
+    if (_nam) {
+        delete _nam;
+    }
 }
 
 //-----------------------------------------------------------------------------
