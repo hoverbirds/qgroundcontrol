@@ -92,6 +92,9 @@ QGeoCodingManagerEngineQGC::QGeoCodingManagerEngineQGC(
 
 QGeoCodingManagerEngineQGC::~QGeoCodingManagerEngineQGC()
 {
+    if (m_networkManager) {
+        delete m_networkManager;
+    }
 }
 
 QGeoCodeReply *QGeoCodingManagerEngineQGC::geocode(const QGeoAddress &address, const QGeoShape &bounds)
