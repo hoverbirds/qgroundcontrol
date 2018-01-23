@@ -70,7 +70,7 @@ public:
     } ErrorCode_t;
 
     // These values are public so the unit test can set appropriate signal wait times
-    static const int _ackTimeoutMilliseconds = 1000;
+    static const int _ackTimeoutMilliseconds = 500;
     static const int _maxRetryCount = 5;
     
 signals:
