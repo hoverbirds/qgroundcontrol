@@ -30,6 +30,7 @@ PlanManager::PlanManager(Vehicle* vehicle, MAV_MISSION_TYPE planType)
     , _transactionInProgress(TransactionNone)
     , _resumeMission(false)
     , _lastMissionRequest(-1)
+    , _missionItemCountToRead(-1)
     , _currentMissionIndex(-1)
     , _lastCurrentIndex(-1)
     , _intMode(false)
@@ -325,6 +326,7 @@ void PlanManager::_handleMissionCount(const mavlink_message_t& message)
         for (int i=0; i<missionCount.count; i++) {
             _itemIndicesToRead << i;
         }
+        _missionItemCountToRead = missionCount.count;
         _requestNextMissionItem();
     }
 }
@@ -470,7 +472,7 @@ void PlanManager::_handleMissionItem(const mavlink_message_t& message)
         return;
     }
 
-    emit progressPct((double)seq / (double)_missionItems.count());
+    emit progressPct((double)seq / (double)_missionItemCountToRead);
     
     _retryCount = 0;
     if (_itemIndicesToRead.count() == 0) {
