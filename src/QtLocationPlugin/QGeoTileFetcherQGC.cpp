@@ -66,7 +66,9 @@ QGeoTileFetcherQGC::QGeoTileFetcherQGC(QGeoTiledMappingManagerEngine *parent)
 //-----------------------------------------------------------------------------
 QGeoTileFetcherQGC::~QGeoTileFetcherQGC()
 {
-
+    if (_networkManager) {
+        delete _networkManager;
+    }
 }
 
 //-----------------------------------------------------------------------------
