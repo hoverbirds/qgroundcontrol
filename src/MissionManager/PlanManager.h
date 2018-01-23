@@ -110,8 +110,8 @@ protected:
     bool _checkForExpectedAck(AckType_t receivedAck);
     void _readTransactionComplete(void);
     void _handleMissionCount(const mavlink_message_t& message);
-    void _handleMissionItem(const mavlink_message_t& message, bool missionItemInt);
-    void _handleMissionRequest(const mavlink_message_t& message, bool missionItemInt);
+    void _handleMissionItem(const mavlink_message_t& message);
+    void _handleMissionRequest(const mavlink_message_t& message);
     void _handleMissionAck(const mavlink_message_t& message);
     void _requestNextMissionItem(void);
     void _clearMissionItems(void);
@@ -149,6 +149,7 @@ protected:
     QList<MissionItem*> _writeMissionItems;     ///< Set of mission items currently being written to vehicle
     int                 _currentMissionIndex;
     int                 _lastCurrentIndex;
+    bool                _intMode;
 };
 
 #endif
