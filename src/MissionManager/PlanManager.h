@@ -112,6 +112,7 @@ protected:
     void _handleMissionCount(const mavlink_message_t& message);
     void _handleMissionItem(const mavlink_message_t& message);
     void _handleMissionRequest(const mavlink_message_t& message);
+    void _sendLastMissionItem();
     void _handleMissionAck(const mavlink_message_t& message);
     void _requestNextMissionItem(void);
     void _clearMissionItems(void);

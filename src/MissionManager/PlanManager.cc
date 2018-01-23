@@ -206,7 +206,7 @@ void PlanManager::_ackTimeout(void)
             // Vehicle did not send final MISSION_ACK at end of sequence
             _sendError(VehicleError, tr("Mission write failed, vehicle failed to send final ack."));
             _finishTransaction(false);
-        } else if (_itemIndicesToWrite[0] == 0) {
+        } else if (_lastMissionRequest == -1) {
             // Vehicle did not respond to MISSION_COUNT, try again
             if (_retryCount > _maxRetryCount) {
                 _sendError(VehicleError, tr("Mission write mission count failed, maximum retries exceeded."));
@@ -218,9 +218,16 @@ void PlanManager::_ackTimeout(void)
             }
         } else {
             // Vehicle did not request all items from ground station
-            _sendError(AckTimeoutError, tr("Vehicle did not request all items from ground station: %1").arg(_ackTypeToString(_expectedAck)));
-            _expectedAck = AckNone;
-            _finishTransaction(false);
+            if (_retryCount > _maxRetryCount) {
+                // Vehicle did not respond to MISSION_ITEM, try again
+                _sendError(AckTimeoutError, tr("Vehicle did not request all items from ground station: %1").arg(_ackTypeToString(_expectedAck)));
+                _expectedAck = AckNone;
+                _finishTransaction(false);
+            } else {
+                _retryCount++;
+                qCDebug(PlanManagerLog) << QStringLiteral("Retrying %1 MISSION_ITEM retry Count").arg(_planTypeString()) << _retryCount;
+                _sendLastMissionItem();
+            }
         }
         break;
     case AckMissionClearAll:
@@ -507,14 +514,26 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message)
     emit progressPct((double)missionRequest.seq / (double)_writeMissionItems.count());
 
     _lastMissionRequest = missionRequest.seq;
-    if (!_itemIndicesToWrite.contains(missionRequest.seq)) {
-        qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 sequence number requested which has already been sent, sending again:").arg(_planTypeString()) << missionRequest.seq;
+    _retryCount = 0;
+    _sendLastMissionItem();
+}
+
+void PlanManager::_sendLastMissionItem() {
+
+    if (!_itemIndicesToWrite.contains(_lastMissionRequest)) {
+        qCDebug(PlanManagerLog) << QStringLiteral("_sendLastMissionItem %1 sequence number requested which has already been sent, sending again:").arg(_planTypeString()) << _lastMissionRequest;
     } else {
-        _itemIndicesToWrite.removeOne(missionRequest.seq);
+        _itemIndicesToWrite.removeOne(_lastMissionRequest);
+    }
+
+    if (_lastMissionRequest < 0 || _lastMissionRequest >= _writeMissionItems.count()) {
+        qCDebug(PlanManagerLog) << QStringLiteral("_sendLastMissionItem %1 invalid mission request ").arg(_planTypeString()) << _lastMissionRequest;
+        _finishTransaction(false);
+        return;
     }
     
-    MissionItem* item = _writeMissionItems[missionRequest.seq];
-    qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 sequenceNumber:command").arg(_planTypeString()) << missionRequest.seq << item->command();
+    MissionItem* item = _writeMissionItems[_lastMissionRequest];
+    qCDebug(PlanManagerLog) << QStringLiteral("_sendLastMissionItem %1 sequenceNumber:command").arg(_planTypeString()) << _lastMissionRequest << item->command();
 
     mavlink_message_t   messageOut;
     if (_intMode) {
@@ -524,10 +543,10 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message)
                                                &messageOut,
                                                _vehicle->id(),
                                                MAV_COMP_ID_MISSIONPLANNER,
-                                               missionRequest.seq,
+                                               _lastMissionRequest,
                                                item->frame(),
                                                item->command(),
-                                               missionRequest.seq == 0,
+                                               _lastMissionRequest == 0,
                                                item->autoContinue(),
                                                item->param1(),
                                                item->param2(),
@@ -544,10 +563,10 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message)
                                            &messageOut,
                                            _vehicle->id(),
                                            MAV_COMP_ID_MISSIONPLANNER,
-                                           missionRequest.seq,
+                                           _lastMissionRequest,
                                            item->frame(),
                                            item->command(),
-                                           missionRequest.seq == 0,
+                                           _lastMissionRequest == 0,
                                            item->autoContinue(),
                                            item->param1(),
                                            item->param2(),
