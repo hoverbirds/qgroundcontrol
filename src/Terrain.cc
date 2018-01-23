@@ -72,6 +72,8 @@ void ElevationProvider::_requestFinished()
         QJsonParseError parseError;
         QJsonDocument responseJson = QJsonDocument::fromJson(responseBytes, &parseError);
         emit terrainData(false, altitudes);
+        reply->close();
+        reply->deleteLater();
         return;
     }
 
@@ -81,6 +83,8 @@ void ElevationProvider::_requestFinished()
     QJsonDocument responseJson = QJsonDocument::fromJson(responseBytes, &parseError);
     if (parseError.error != QJsonParseError::NoError) {
         emit terrainData(false, altitudes);
+        reply->close();
+        reply->deleteLater();
         return;
     }
     QJsonObject rootObject = responseJson.object();
@@ -94,4 +98,6 @@ void ElevationProvider::_requestFinished()
         emit terrainData(true, altitudes);
     }
     emit terrainData(false, altitudes);
+    reply->close();
+    reply->deleteLater();
 }
