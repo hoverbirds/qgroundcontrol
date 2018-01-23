@@ -294,6 +294,7 @@ void PlanMasterController::loadFromFile(const QString& filename)
 
         if (!JsonHelper::isJsonFile(bytes, jsonDoc, errorString)) {
             qgcApp()->showMessage(errorMessage.arg(errorString));
+            file.close();
             return;
         }
 
@@ -301,6 +302,7 @@ void PlanMasterController::loadFromFile(const QString& filename)
         QJsonObject json = jsonDoc.object();
         if (!JsonHelper::validateQGCJsonFile(json, _planFileType, _planFileVersion, _planFileVersion, version, errorString)) {
             qgcApp()->showMessage(errorMessage.arg(errorString));
+            file.close();
             return;
         }
 
@@ -311,6 +313,7 @@ void PlanMasterController::loadFromFile(const QString& filename)
         };
         if (!JsonHelper::validateKeys(json, rgKeyInfo, errorString)) {
             qgcApp()->showMessage(errorMessage.arg(errorString));
+            file.close();
             return;
         }
 
@@ -329,6 +332,8 @@ void PlanMasterController::loadFromFile(const QString& filename)
             qgcApp()->showMessage(errorMessage.arg(errorString));
         }
     }
+
+    file.close();
 
     if (!offline()) {
         setDirty(true);
@@ -366,6 +371,7 @@ void PlanMasterController::saveToFile(const QString& filename)
 
         QJsonDocument saveDoc(planJson);
         file.write(saveDoc.toJson());
+        file.close();
     }
 
     // Only clear dirty bit if we are offline
